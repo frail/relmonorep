@@ -3,14 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"text/template"
 	"time"
 
 	"github.com/coreos/go-semver/semver"
 )
 
-var prefix = flag.String("prefix", "", "release branch prefix")
+var (
+	prefix = flag.String("prefix", "", "release branch prefix")
+	output = flag.String("output", "-", "output file to prepend changelog")
+)
 
 func main() {
 	flag.Parse()
@@ -50,6 +52,12 @@ func main() {
 	}
 	c.Tag = fmt.Sprintf("%s/%s", *prefix, version)
 
+	writer, err := newFile(*output)
+	if err != nil {
+		panic(err)
+	}
+	defer writer.Close()
+
 	functions := template.FuncMap{
 		"url": func() string {
 			return url
@@ -59,7 +67,7 @@ func main() {
 		},
 	}
 	t := template.Must(template.New("changelog").Funcs(functions).Parse(ChangeLogTemplate))
-	if err := t.Execute(os.Stdout, c); err != nil {
+	if err := t.Execute(writer, c); err != nil {
 		panic(err)
 	}
 }
