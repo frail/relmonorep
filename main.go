@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"text/template"
 	"time"
 
@@ -25,6 +26,10 @@ func main() {
 	tags, err := git.ListReleaseTags()
 	if err != nil {
 		panic(err)
+	}
+
+	if len(tags) == 0 {
+		log.Fatal("There is no release tags to work on create a release tag first !")
 	}
 
 	lastReleaseTag := tags[0]
