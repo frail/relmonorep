@@ -27,17 +27,22 @@ func main() {
 		panic(err)
 	}
 
-	lastRelease := tags[0]
+	lastReleaseTag := tags[0]
 	c := ChangeLog{
 		Tag:     "HEAD",
-		PrevTag: lastRelease,
+		PrevTag: lastReleaseTag,
 		Date:    time.Now().Format("2006-01-02"),
 	}
 	if err := git.FillCommitsSince(&c); err != nil {
 		panic(err)
 	}
 
-	version, err := semver.NewVersion(lastRelease[len(*prefix)+1:])
+	lastReleaseVersion := lastReleaseTag
+	if *prefix != "" {
+		lastReleaseVersion = lastReleaseTag[len(*prefix)+1:]
+	}
+
+	version, err := semver.NewVersion(lastReleaseVersion)
 	if err != nil {
 		panic(err)
 	}
