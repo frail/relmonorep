@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	commitRE = regexp.MustCompile(`^(?P<hash>[0-9a-fA-F]{40}) ((?P<type>fix|feat|perf)(?P<project>\(\w+\))?: )?(?P<subject>.+)$`)
+	commitRE = regexp.MustCompile(`^(?P<hash>[0-9a-fA-F]{40}) ((?P<type>fix|feat|perf|style|chore|refactor)(?P<project>\(\w+\))?: )?(?P<subject>.+)$`)
 	sshRE    = regexp.MustCompile(`^git@(?P<host>[a-z.]+?):(?P<path>[a-z./]+?)\.git$`)
+	versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+$`)
 )
 
 type Git struct {
@@ -40,7 +41,7 @@ func (g *Git) FillCommitsSince(cl *ChangeLog) error {
 			}
 		}
 		switch c.Type {
-		case "fix", "perf":
+		case "fix", "perf", "style":
 			cl.BugFixes = append(cl.BugFixes, c)
 		case "feat":
 			cl.Features = append(cl.Features, c)
@@ -52,7 +53,19 @@ func (g *Git) FillCommitsSince(cl *ChangeLog) error {
 }
 
 func (g *Git) ListReleaseTags() ([]string, error) {
-	return g.exec("tag", "-l", g.Prefix+"*", "--sort=-creatordate")
+	tags, err := g.exec("tag", "-l", g.Prefix+"*", "--sort=-creatordate")
+	if err != nil {
+		return nil, err
+	}
+
+	var relTags []string
+
+	for _, t := range(tags) {
+		if versionRE.MatchString(t) {
+			relTags = append(relTags, t)
+		}
+	}
+	return tags, err
 }
 
 func (g *Git) RepoURL() (string, error) {
