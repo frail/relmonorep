@@ -8,14 +8,14 @@ const ChangeLogTemplate = `
 # {{ version }} ({{ .Date }})
 {{ end }}
 
-### Bug Fixes
-{{ range .BugFixes }}
-{{ template "commit" . }}{{ end }}
-
 ### Features
 {{ range .Features }}
 {{ template "commit" . }}{{ end }}
+
+### Bug Fixes
+{{ range .BugFixes }}
+{{ template "commit" . }}{{ end }}
 {{ end }}
 
-{{ define "commit" }} * {{ .Subject }} ([{{ .ShortHash }}]({{ url }}/commit/{{ .ShortHash }})) {{ end }}
+{{ define "commit" }} * {{ .Subject }} ([{{ .ShortHash }}]({{ url }}/commit/{{ .ShortHash }})){{ end }}
 `

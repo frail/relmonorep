@@ -1,5 +1,14 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"text/template"
+	"time"
+
+	"github.com/coreos/go-semver/semver"
+)
+
 type ChangeLog struct {
 	Tag      string
 	PrevTag  string
@@ -19,4 +28,72 @@ type Commit struct {
 
 func (c Commit) ShortHash() string {
 	return c.Hash[:7]
+}
+
+func generateChangelog(prefix, output string) error {
+	git := Git{prefix}
+	url, err := git.RepoURL()
+	if err != nil {
+		return err
+	}
+
+	tags, err := git.ListReleaseTags()
+	if err != nil {
+		return fmt.Errorf("can't list release tags: %v", err)
+	}
+
+	if len(tags) == 0 {
+		log.Fatal("There is no release tags to work on create a release tag first !")
+	}
+
+	lastReleaseTag := tags[0]
+	c := ChangeLog{
+		Tag:     "HEAD",
+		PrevTag: lastReleaseTag,
+		Date:    time.Now().Format("2006-01-02"),
+	}
+	if err := git.FillCommitsSince(&c); err != nil {
+		return fmt.Errorf("can't read commit logs: %v", err)
+	}
+
+	lastReleaseVersion := lastReleaseTag
+	if prefix != "" {
+		lastReleaseVersion = lastReleaseTag[len(prefix)+1:]
+	}
+
+	version, err := semver.NewVersion(lastReleaseVersion)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case len(c.Breaking) > 0:
+		version.BumpMajor()
+	case len(c.Features) > 0:
+		version.BumpMinor()
+	default:
+		version.BumpPatch()
+	}
+	c.Tag = fmt.Sprintf("%s/%s", prefix, version)
+
+	writer, err := newFile(output)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+
+	functions := template.FuncMap{
+		"url": func() string {
+			return url
+		},
+		"version": func() string {
+			return version.String()
+		},
+	}
+	t := template.Must(template.New("changelog").Funcs(functions).Parse(ChangeLogTemplate))
+	if err := t.Execute(writer, c); err != nil {
+		return err
+	}
+
+	return nil
 }

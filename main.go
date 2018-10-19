@@ -3,81 +3,45 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"text/template"
-	"time"
-
-	"github.com/coreos/go-semver/semver"
+	"os"
 )
 
 var (
-	prefix = flag.String("prefix", "", "release branch prefix")
-	output = flag.String("output", "-", "output file to prepend changelog")
+	errUsage   = fmt.Errorf(`usage: %s {changelog|release}`, os.Args[0])
+	errVersion = fmt.Errorf("version required")
 )
 
 func main() {
-	flag.Parse()
-	git := Git{*prefix}
-	url, err := git.RepoURL()
-	if err != nil {
-		panic(err)
+	var cmd string
+	if len(os.Args) > 1 {
+		cmd = os.Args[1]
 	}
 
-	tags, err := git.ListReleaseTags()
-	if err != nil {
-		panic(err)
-	}
-
-	if len(tags) == 0 {
-		log.Fatal("There is no release tags to work on create a release tag first !")
-	}
-
-	lastReleaseTag := tags[0]
-	c := ChangeLog{
-		Tag:     "HEAD",
-		PrevTag: lastReleaseTag,
-		Date:    time.Now().Format("2006-01-02"),
-	}
-	if err := git.FillCommitsSince(&c); err != nil {
-		panic(err)
-	}
-
-	lastReleaseVersion := lastReleaseTag
-	if *prefix != "" {
-		lastReleaseVersion = lastReleaseTag[len(*prefix)+1:]
-	}
-
-	version, err := semver.NewVersion(lastReleaseVersion)
-	if err != nil {
-		panic(err)
-	}
-
-	switch {
-	case len(c.Breaking) > 0:
-		version.BumpMajor()
-	case len(c.Features) > 0:
-		version.BumpMinor()
+	var err error
+	switch cmd {
+	case "release":
+		flags := flag.NewFlagSet("release", flag.ExitOnError)
+		prefix := flags.String("prefix", "", "release branch prefix")
+		version := flags.String("version", "", "release version")
+		verbose := flags.Bool("verbose", false, "verbose output")
+		flags.Parse(os.Args[2:])
+		if *version == "" {
+			err = errVersion
+		} else {
+			err = release(*prefix, *version, *verbose)
+		}
+	case "changelog":
+		flags := flag.NewFlagSet("changelog", flag.ExitOnError)
+		prefix := flags.String("prefix", "", "release branch prefix")
+		output := flags.String("output", "-", "output file to prepend changelog")
+		flags.Parse(os.Args[2:])
+		err = generateChangelog(*prefix, *output)
 	default:
-		version.BumpPatch()
+		err = errUsage
 	}
-	c.Tag = fmt.Sprintf("%s/%s", *prefix, version)
 
-	writer, err := newFile(*output)
 	if err != nil {
-		panic(err)
-	}
-	defer writer.Close()
-
-	functions := template.FuncMap{
-		"url": func() string {
-			return url
-		},
-		"version": func() string {
-			return version.String()
-		},
-	}
-	t := template.Must(template.New("changelog").Funcs(functions).Parse(ChangeLogTemplate))
-	if err := t.Execute(writer, c); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
