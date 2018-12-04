@@ -3,7 +3,7 @@ package tmpl
 const BitBucket = `
 {{ define "changelog" }}
 {{ if .PrevTag }}
-# [{{ version }}]({{ url }}/compare/{{ .PrevTag }}..{{ .Tag }}) ({{ .Date }})
+# [{{ version }}]({{ url }}/compare/{{ .Tag }}..{{ .PrevTag }}) ({{ .Date }})
 {{ else }}
 # {{ version }} ({{ .Date }})
 {{ end }}
