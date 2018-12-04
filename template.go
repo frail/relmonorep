@@ -9,10 +9,12 @@ const ChangeLogTemplate = `
 {{ end }}
 {{ if .Breaking }}### Breaking Changes
 {{ range .Breaking }}
-{{ template "commit" . }}{{ end }}{{ end }}
+{{ template "commit" . }}{{ end }}
+{{ end }}
 {{ if .Features }}### Features
 {{ range .Features }}
-{{ template "commit" . }}{{ end }}{{ end }}
+{{ template "commit" . }}{{ end }}
+{{ end }}
 {{ if .BugFixes }}### Bug Fixes
 {{ range .BugFixes }}
 {{ template "commit" . }}{{ end }}{{ end }}

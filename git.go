@@ -11,7 +11,7 @@ import (
 
 var (
 	commitRE = regexp.MustCompile(`^(?P<hash>[0-9a-fA-F]{40}) ((?P<type>fix|feat|perf|style|chore|refactor)(?P<project>\(\w+\))?: )?(?P<subject>.+)$`)
-	sshRE    = regexp.MustCompile(`^git@(?P<host>[a-z.]+?):(?P<path>[a-z./]+?)\.git$`)
+	sshRE    = regexp.MustCompile(`^git@(?P<host>[a-z.]+?):(?P<path>[0-9a-zA-Z./-]+?)\.git$`)
 	versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+$`)
 )
 
