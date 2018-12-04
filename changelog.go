@@ -76,7 +76,12 @@ func generateChangelog(prefix, output string) error {
 	default:
 		version.BumpPatch()
 	}
-	c.Tag = fmt.Sprintf("%s/%s", prefix, version)
+	
+	if prefix != "" {
+		c.Tag = fmt.Sprintf("%s/%s", prefix, version)
+	} else {
+		c.Tag = version.String()
+	}
 
 	writer, err := newFile(output)
 	if err != nil {
