@@ -1,6 +1,6 @@
-package main
+package tmpl
 
-const ChangeLogTemplate = `
+const Default = `
 {{ define "changelog" }}
 {{ if .PrevTag }}
 # [{{ version }}]({{ url }}/compare/{{ .PrevTag }}..{{ .Tag }}) ({{ .Date }})

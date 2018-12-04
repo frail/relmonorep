@@ -68,15 +68,15 @@ func (g *Git) ListReleaseTags() ([]string, error) {
 	return tags, err
 }
 
-func (g *Git) RepoURL() (string, error) {
+func (g *Git) RepoInfo() (string, string, error) {
 	var url, host, path string
 	remote, err := g.exec("remote", "get-url", "origin")
 	if err != nil {
-		return url, err
+		return url, host, err
 	}
 
 	if len(remote) != 1 {
-		return url, errors.New("git: more than 1 origin repo url")
+		return url, host, errors.New("git: more than 1 origin repo url")
 	}
 
 	remoteURL := remote[0]
@@ -94,7 +94,7 @@ func (g *Git) RepoURL() (string, error) {
 	// TODO add https origin support
 
 	url = fmt.Sprintf("https://%s/%s", host, path)
-	return url, nil
+	return url, host, nil
 }
 
 func (g *Git) exec(args ...string) ([]string, error) {

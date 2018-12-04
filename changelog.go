@@ -6,6 +6,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/msimav/relmonorep/tmpl"
+
 	"github.com/coreos/go-semver/semver"
 )
 
@@ -32,7 +34,7 @@ func (c Commit) ShortHash() string {
 
 func generateChangelog(prefix, output string) error {
 	git := Git{prefix}
-	url, err := git.RepoURL()
+	url, host, err := git.RepoInfo()
 	if err != nil {
 		return err
 	}
@@ -90,7 +92,18 @@ func generateChangelog(prefix, output string) error {
 			return version.String()
 		},
 	}
-	t := template.Must(template.New("changelog").Funcs(functions).Parse(ChangeLogTemplate))
+
+	var currentTemplate string
+	switch host {
+	case "github.com":
+		currentTemplate = tmpl.Github
+	case "bitbucket.org":
+		currentTemplate = tmpl.BitBucket
+	default:
+		currentTemplate = tmpl.Default
+	}
+
+	t := template.Must(template.New("changelog").Funcs(functions).Parse(currentTemplate))
 	if err := t.Execute(writer, c); err != nil {
 		return err
 	}
