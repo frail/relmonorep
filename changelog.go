@@ -6,7 +6,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/msimav/relmonorep/tmpl"
+	"github.com/msimav/frail/tmpl"
 
 	"github.com/coreos/go-semver/semver"
 )
